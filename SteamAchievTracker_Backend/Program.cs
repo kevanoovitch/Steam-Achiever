@@ -21,9 +21,12 @@ internal class Program
                     ?? throw new Exception("Missing STEAM_WEB_API_KEY");
         var steam = new SteamAPIClient(apiKey); // or inject via DI if you prefer
 
-        app.MapGet("/api/achievements/unfinished", async (ulong steamid, uint appid, string? l) =>
+       app.MapGet("/api/achievements/unfinished", async (string steamid, uint appid, string? l) =>
         {
-            var list = await steam.GetUnfinishedAchievementsAsync(steamid, appid, l);
+            if (!ulong.TryParse(steamid, out var sid))
+                return Results.BadRequest("steamid must be a numeric SteamID64 (e.g., 7656119...).");
+
+            var list = await steam.GetUnfinishedAchievementsDetailedAsync(sid, appid, l);
             return Results.Ok(new { appId = appid, count = list.Count, achievements = list });
         });
 
